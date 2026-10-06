@@ -2,13 +2,13 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   annotations:
-    build.appstudio.openshift.io/repo: https://github.com/konflux-ci/image-controller?rev={{revision}}
+    build.appstudio.openshift.io/repo: https://github.com/SealVis/image-controller?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: '3'
     pipelinesascode.tekton.dev/on-cel-expression: |
-      event == "pull_request" && target_branch == "main"
+      event == "incoming" && target_branch == "rebuild"
       && ( !has(body.pull_request) || !body.pull_request.draft)
       && (
         ".tekton/**".pathChanged()
@@ -28,7 +28,7 @@ metadata:
     appstudio.openshift.io/component: image-controller
     pipelines.appstudio.openshift.io/type: build
   name: image-controller-on-pull-request
-  namespace: rhtap-build-tenant
+  namespace: build-tenant
 spec:
   params:
   - name: git-url
@@ -36,7 +36,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/rhtap-build-tenant/image-controller/image-controller:on-pr-{{revision}}
+    value: quay.io/sealvis-workloads/build-tenant/image-controller/image-controller:on-pr-{{revision}}
   - name: image-expires-after
     value: 5d
   - name: dockerfile
@@ -47,6 +47,9 @@ spec:
     value: "true"
   - name: prefetch-input
     value: '{"type": "gomod", "path": "."}'
+  - name: build-platforms
+    value:
+    - linux/x86_64
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.
